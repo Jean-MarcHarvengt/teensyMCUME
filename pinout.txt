@@ -1,0 +1,42 @@
+pinout Teensy 3.6 (2x24 pins)
+-----------------------------
+
+                         GND X           VIn  (NC)
+                          00             Ang  (NC)
+                          01           X 3.3v (NC)
+           VGA Blue (OPT) 02           X 23   SD CS
+          Key USER1 (OPT) 03             22   VGA Hsync (OPT)
+          Key USER2 (OPT) 04             21   VGA Red (OPT)
+            VGA Red (OPT) 05             20   VGA Red (OPT)
+          VGA Green (OPT) 06           X 19   I2C CLK (OPT)
+          VGA Green (OPT) 07           X 18   I2C DAT (OPT)
+          VGA Green (OPT) 08           X 17   JOY2 Fire
+             ILI DC       09 X         X 16   JOY2 AnalogY-A2
+             ILI CS       10 X         X 15   JOY2 AnalogX-A1
+SD/ILI SDI+T_DIN-SPI MOSI 11 X           14   VGA Blue (OPT)
+SD/ILI SDO+T_DO-SPI MISO  12 X         X 13   SD/ILI SCK+T_CLK-SPI SCK
+
+
+
+               (NC)       3.3v           GND
+               (NC)       24             DAC1 Audio R (OPT)
+               (NC)       25             DAC0 Audio L (OPT)
+               (NC)       26             39   Key USER4 (OPT)
+               (NC)       27           X 38   ILI T_CS (Touch screen)
+               (NC)       28           X 37   ILI T_IRQ (Touch screen)
+          VGA Vsync (OPT) 29             36    
+                          30             35    
+                          31             34   
+                          32             33   Key USER3 (OPT)
+
+
+(X)   mandatory pins to connect for the minimum set-up
+(OPT) extra connections for VGA out, extra keys, audio and the external joystick support
+
+The keys (all) are using internal pullup so just connect the other side to the GND
+The Analog joypad also needs VCC and GND connections !
+The Touch part of the ILI: T_DIN,T_DO,T_CLK,T_CS (SPI) but also T_IRQ must be connected
+The Display part of the ILI: SDI,SDO,SCK,CS but also DC,VCC and GND must be connected
+The i2ckeyboard : I2C CLK, I2C DAT, VCC and GND
+
+Everything is powered over the USB connector of the Teensy!
