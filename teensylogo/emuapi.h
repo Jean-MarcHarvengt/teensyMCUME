@@ -4,7 +4,7 @@
 //#define INVX        1
 //#define INVY        1
 //#define HAS_SND     1
-#define HAS_I2CKBD  1
+//#define HAS_I2CKBD  1
 //#define TIMER_REND  1
 
 // Title:     <                                        >
@@ -69,16 +69,20 @@ const unsigned short i2ckeys[] = {
 #endif
 
 
-#define MASK_JOY2_RIGHT 0x001
-#define MASK_JOY2_LEFT  0x002
-#define MASK_JOY2_UP    0x004
-#define MASK_JOY2_DOWN  0x008
-#define MASK_JOY2_BTN   0x010
-#define MASK_KEY_USER1  0x020
-#define MASK_KEY_USER2  0x040
-#define MASK_KEY_USER3  0x080
-#define MASK_KEY_USER4  0x100
-#define MASK_KEY_ESCAPE 0x200
+#define MASK_JOY2_RIGHT 0x0001
+#define MASK_JOY2_LEFT  0x0002
+#define MASK_JOY2_UP    0x0004
+#define MASK_JOY2_DOWN  0x0008
+#define MASK_JOY2_BTN   0x0010
+#define MASK_KEY_USER1  0x0020
+#define MASK_KEY_USER2  0x0040
+#define MASK_KEY_USER3  0x0080
+#define MASK_JOY1_RIGHT 0x0100
+#define MASK_JOY1_LEFT  0x0200
+#define MASK_JOY1_UP    0x0400
+#define MASK_JOY1_DOWN  0x0800
+#define MASK_JOY1_BTN   0x1000
+#define MASK_KEY_USER4  0x2000
 
 
 

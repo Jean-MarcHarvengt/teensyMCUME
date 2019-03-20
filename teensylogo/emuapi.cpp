@@ -5,32 +5,41 @@ extern "C" {
   #include "iopins.h"
 }
 
-#include "ili9341_t3dma.h"
-//#include "logo.h"
+#include "ili9341_t_dma.h"
+#include "logo.h"
 #include "bmpjoy.h"
 #include "bmpvbar.h"
 #include "bmpvga.h"
 #include "bmptft.h"
-#include <SD.h>
-#ifdef HAS_I2CKBD
-#include <Wire.h>
-//#include <i2c_t3.h>
-//#define Wire Wire2
+
+#ifndef SD_CS
+#define USE_SDFAT 1
 #endif
 
-extern ILI9341_t3DMA tft;
+#ifdef HAS_I2CKBD
+#include <Wire.h>
+#endif
+
+#ifdef USE_SDFAT
+#include <SdFat.h>
+static SdFatSdio SD;
+#else
+#include <SD.h>
+#endif
+
+extern ILI9341_t_DMA tft;
 static File file;
 static char romspath[64];
 static int16_t calMinX=-1,calMinY=-1,calMaxX=-1,calMaxY=-1;
 static bool i2cKeyboardPresent = false;
-const uint16_t deflogo[] = {
-  0x0000,0x0000
-};
-static const uint16_t * logo = deflogo;
+//const uint16_t deflogo[] = {
+//  0x0000,0x0000
+//};
+//static const uint16_t * logo = deflogo;
 
 #define CALIBRATION_FILE    "/cal.cfg"
 
-#define MAX_FILES           64
+#define MAX_FILES           32
 #define MAX_FILENAME_SIZE   28
 #define MAX_MENULINES       (MKEY_L9)
 #define TEXT_HEIGHT         16
@@ -101,7 +110,6 @@ static char files[MAX_FILES][MAX_FILENAME_SIZE];
 
 static int readNbFiles(void) {
   int totalFiles = 0;
-  char * filename;
   File entry;    
   file = SD.open(romspath);
   while ( (true) && (totalFiles<MAX_FILES) ) {
@@ -110,7 +118,12 @@ static int readNbFiles(void) {
       // no more files
       break;
     }
-    filename = entry.name();
+#ifdef USE_SDFAT
+  char filename[MAX_FILENAME_SIZE];
+  entry.getName(&filename[0], MAX_FILENAME_SIZE); 
+#else
+  char * filename = entry.name();
+#endif 
     Serial.println(filename); 
     if (!entry.isDirectory())  {
       strncpy(&files[totalFiles][0], filename, MAX_FILENAME_SIZE-1);
@@ -142,7 +155,7 @@ static char captureTouchZone(const unsigned short * areas, const unsigned short 
             if (zt<1000) {
               prev_zt=0; 
               return ACTION_NONE;
-            }
+            }   
             int i=0;
             int k=0;
             int y2=0, y1=0;
@@ -229,12 +242,12 @@ static void callibrationInit(void)
   prev_zt = 1;  
 }
 
-/*
+
 static void readCallibration(void) 
 {
   char fileBuffer[64];
-  File file(CALIBRATION_FILE, O_READ);
-  if (file.isOpen()) {
+  File file = SD.open(CALIBRATION_FILE, O_READ);  
+  if (file) {
     if ( file.read(fileBuffer, 64) ) {
       sscanf(fileBuffer,"%d %d %d %d", &calMinX,&calMinY,&calMaxX,&calMaxY);
     }
@@ -254,8 +267,8 @@ static void readCallibration(void)
 static void writeCallibration(void) 
 {
   tft.callibrateTouch(calMinX,calMinY,calMaxX,calMaxY);
-  File file = sd.open(CALIBRATION_FILE, O_WRITE | O_CREAT | O_TRUNC);
-  if (file.isOpen()) {
+  File file = SD.open(CALIBRATION_FILE, O_WRITE | O_CREAT | O_TRUNC);
+  if (file) {
     file.print(calMinX);
     file.print(" ");
     file.print(calMinY);
@@ -345,7 +358,7 @@ int handleCallibration(uint16_t bClick) {
     prev_zt = 0;
   }  
 }
-*/
+
 
 
 bool menuActive(void) 
@@ -363,17 +376,9 @@ int handleMenu(uint16_t bClick)
   strcat(newpath, selection);
 
   int rx=0,ry=0,rw=0,rh=0;
-  char c = 0; // captureTouchZone(menutouchareas, menutouchactions, &rx,&ry,&rw,&rh);
+  char c = captureTouchZone(menutouchareas, menutouchactions, &rx,&ry,&rw,&rh);
  
-  if ( (c >= MKEY_L1) && (c <= MKEY_L9) ) {
-    if ( (topFile+(int)c-1) <= (nbFiles-1)  )
-    {
-      curFile = topFile + (int)c -1;
-      menuRedraw=true;
-     //tft.drawRectNoDma( rx,ry,rw,rh, KEYBOARD_HIT_COLOR );
-    }
-  }
-  else if ( (bClick & MASK_JOY2_BTN) || (c == MKEY_TFT) ) {
+  if ( (bClick & MASK_JOY2_BTN) || (c == MKEY_TFT) ) {
       File file = SD.open(newpath);
       emu_printf(newpath);
       if (file.isDirectory())  {
@@ -390,13 +395,21 @@ int handleMenu(uint16_t bClick)
       menuRedraw=true;
       action = ACTION_RUNVGA;    
   }
+  else if ( (c >= MKEY_L1) && (c <= MKEY_L9) ) {
+    if ( (topFile+(int)c-1) <= (nbFiles-1)  )
+    {
+      curFile = topFile + (int)c -1;
+      menuRedraw=true;
+     //tft.drawRectNoDma( rx,ry,rw,rh, KEYBOARD_HIT_COLOR );
+    }
+  }
   else if (bClick & MASK_JOY2_UP) {
     if (curFile!=0) {
       menuRedraw=true;
       curFile--;
     }
   }
-  else if (c == MKEY_UP) {
+  else if ( (bClick & MASK_JOY2_RIGHT) || (bClick & MASK_JOY1_RIGHT) || (c == MKEY_UP) ) {
     if ((curFile-9)>=0) {
       menuRedraw=true;
       curFile -= 9;
@@ -411,7 +424,7 @@ int handleMenu(uint16_t bClick)
       menuRedraw=true;
     }
   }
-  else if (c == MKEY_DOWN) {
+  else if ( (bClick & MASK_JOY2_LEFT) || (bClick & MASK_JOY1_LEFT) || (c == MKEY_DOWN) ) {
     if ((curFile<(nbFiles-9)) && (nbFiles)) {
       curFile += 9;
       menuRedraw=true;
@@ -421,7 +434,7 @@ int handleMenu(uint16_t bClick)
       menuRedraw=true;
     }
   }
-  else if ( (bClick & MASK_JOY2_RIGHT) || (bClick & MASK_JOY2_LEFT) || (c == MKEY_JOY) ) {
+  else if ( (bClick & MASK_KEY_USER2) || (c == MKEY_JOY) ) {
     emu_SwapJoysticks(0);
     menuRedraw=true;  
   }   
@@ -481,8 +494,11 @@ void emu_init(void)
 {
   Serial.begin(115200);
   //while (!Serial) {}
-
+#ifdef USE_SDFAT
+  if (!SD.begin()) {
+#else
   if (!SD.begin(SD_CS)) {
+#endif    
     emu_printf("SdFat.begin() failed");
   }
   strcpy(romspath,ROMSDIR);
@@ -492,25 +508,41 @@ void emu_init(void)
   Serial.println(nbFiles);
 
   emu_InitJoysticks();
-  //readCallibration();
+  readCallibration();
  
-  //if ((tft.isTouching()) || (emu_ReadKeys() & MASK_JOY2_BTN) ) {
-  //  callibrationInit();
-  //} else  
+  if ((tft.isTouching()) || (emu_ReadKeys() & MASK_JOY2_BTN) ) {
+    callibrationInit();
+  } 
+  else  
   {
     toggleMenu(true);
   }
 
 #ifdef HAS_I2CKBD
+  byte msg[7]={0,0,0,0,0,0,0};
   Wire.begin(); // join i2c bus SDA2/SCL2
-  //Wire.setDefaultTimeout(200000); // 200ms  
-  int status = Wire.requestFrom(8, 5);
-  Serial.println(status);
-  if(status == 5) {
+  Wire.requestFrom(8, 7);    // request 7 bytes from slave device #8 
+  int i = 0;
+  while (Wire.available() && (i<7) ) { // slave may send less than requested
+    byte b = Wire.read(); // receive a byte
+    msg[i++] = b;        
+  }
+  /*     
+  Serial.println(msg[0], BIN);
+  Serial.println(msg[1], BIN);
+  Serial.println(msg[2], BIN);
+  Serial.println(msg[3], BIN);
+  Serial.println(msg[4], BIN);
+  Serial.println(msg[5], BIN);
+  Serial.println(msg[6], BIN);
+  */  
+  if ( (msg[0] == 0xff) && (msg[1] == 0xff) && 
+       (msg[2] == 0xff) && (msg[3] == 0xff) && 
+       (msg[4] == 0xff) && (msg[5] == 0xff) && (msg[6] == 0xff)) {
     i2cKeyboardPresent = true;
-    Serial.println("i2C keyboard found");    
-  } 
-#endif 
+    Serial.println("i2C keyboard found");            
+  }
+#endif
 }
 
 
@@ -721,8 +753,9 @@ static uint16_t readAnalogJoystick(void)
   if (yReading < 128) joysval |= MASK_JOY2_UP;
   else if (yReading > 128) joysval |= MASK_JOY2_DOWN;
   
+#ifdef PIN_JOY2_BTN  
   joysval |= (digitalRead(PIN_JOY2_BTN) == HIGH ? 0 : MASK_JOY2_BTN);
-
+#endif
   return (joysval);     
 }
 
@@ -739,21 +772,6 @@ int emu_SwapJoysticks(int statusOnly) {
   return(joySwapped?1:0);
 }
 
-unsigned short emu_DebounceLocalKeys(void)
-{
-  uint16_t bCurState = readAnalogJoystick();
-  bCurState |= (digitalRead(PIN_KEY_ESCAPE) == HIGH ? 0 : MASK_KEY_ESCAPE);
-  bCurState |= (digitalRead(PIN_KEY_USER1) == HIGH ? 0 : MASK_KEY_USER1);
-  bCurState |= (digitalRead(PIN_KEY_USER2) == HIGH ? 0 : MASK_KEY_USER2);
-  bCurState |= (digitalRead(PIN_KEY_USER3) == HIGH ? 0 : MASK_KEY_USER3);
-  bCurState |= (digitalRead(PIN_KEY_USER4) == HIGH ? 0 : MASK_KEY_USER4);
-
-  uint16_t bClick = bCurState & ~bLastState;
-  bLastState = bCurState;
-
-  return (bClick);
-}
-
 int emu_GetPad(void) 
 {
   return(keypadval|((joySwapped?1:0)<<7));
@@ -766,54 +784,79 @@ int emu_ReadKeys(void)
   uint16_t j2 = 0;
   
   // Second joystick
-  /*
+#ifdef PIN_JOY1_1
   if ( digitalRead(PIN_JOY1_1) == LOW ) j2 |= MASK_JOY2_UP;
+#endif
+#ifdef PIN_JOY1_2
   if ( digitalRead(PIN_JOY1_2) == LOW ) j2 |= MASK_JOY2_DOWN;
+#endif
+#ifdef PIN_JOY1_3
   if ( digitalRead(PIN_JOY1_3) == LOW ) j2 |= MASK_JOY2_RIGHT;
+#endif
+#ifdef PIN_JOY1_4
   if ( digitalRead(PIN_JOY1_4) == LOW ) j2 |= MASK_JOY2_LEFT;
+#endif
+#ifdef PIN_JOY1_BTN
   if ( digitalRead(PIN_JOY1_BTN) == LOW ) j2 |= MASK_JOY2_BTN;
-  */
+#endif
   if (joySwapped) {
     retval = ((j1 << 8) | j2);
   }
   else {
     retval = ((j2 << 8) | j1);
   }
-  
+
+#ifdef PIN_KEY_USER1 
   if ( digitalRead(PIN_KEY_USER1) == LOW ) retval |= MASK_KEY_USER1;
+#endif
+#ifdef PIN_KEY_USER2 
   if ( digitalRead(PIN_KEY_USER2) == LOW ) retval |= MASK_KEY_USER2;
+#endif
+#ifdef PIN_KEY_USER3 
   if ( digitalRead(PIN_KEY_USER3) == LOW ) retval |= MASK_KEY_USER3;
+#endif
+#ifdef PIN_KEY_USER4 
   if ( digitalRead(PIN_KEY_USER4) == LOW ) retval |= MASK_KEY_USER4;
+#endif
+
+  //Serial.println(retval,HEX);
 
   return (retval);
 }
 
+unsigned short emu_DebounceLocalKeys(void)
+{
+  uint16_t bCurState = emu_ReadKeys();
+  uint16_t bClick = bCurState & ~bLastState;
+  bLastState = bCurState;
+
+  return (bClick);
+}
 
 int emu_ReadI2CKeyboard(void) {
   int retval=0;
 #ifdef HAS_I2CKBD
   if (i2cKeyboardPresent) {
-    byte msg[5];
-    Wire.requestFrom(8, 5);    // request 5 bytes from slave device #8 
+    byte msg[7]={0,0,0,0,0,0,0};
+    Wire.requestFrom(8, 7);    // request 7 bytes from slave device #8 
     int i = 0;
     int hitindex=-1;
-    while (Wire.available() && (i<5) ) { // slave may send less than requested
+    while (Wire.available() && (i<7) ) { // slave may send less than requested
       byte b = Wire.read(); // receive a byte
       if (b != 0xff) hitindex=i; 
       msg[i++] = b;        
     }
     
     if (hitindex >=0 ) {
-      
+      /*
       Serial.println(msg[0], BIN);
       Serial.println(msg[1], BIN);
       Serial.println(msg[2], BIN);
       Serial.println(msg[3], BIN);
       Serial.println(msg[4], BIN);
-      Serial.println("");
-      Serial.println("");
-      Serial.println("");
-      
+      Serial.println(msg[5], BIN);
+      Serial.println(msg[6], BIN);
+      */
       unsigned short match = (~msg[hitindex])&0x00FF | (hitindex<<8);
       //Serial.println(match,HEX);  
       for (i=0; i<sizeof(i2ckeys); i++) {
@@ -829,19 +872,39 @@ int emu_ReadI2CKeyboard(void) {
 }
 
 void emu_InitJoysticks(void) { 
-  /*   
+
+  // Second Joystick   
+#ifdef PIN_JOY1_1
   pinMode(PIN_JOY1_1, INPUT_PULLUP);
+#endif  
+#ifdef PIN_JOY1_2
   pinMode(PIN_JOY1_2, INPUT_PULLUP);
+#endif  
+#ifdef PIN_JOY1_3
   pinMode(PIN_JOY1_3, INPUT_PULLUP);
+#endif  
+#ifdef PIN_JOY1_4
   pinMode(PIN_JOY1_4, INPUT_PULLUP);
+#endif  
+#ifdef PIN_JOY1_BTN
   pinMode(PIN_JOY1_BTN, INPUT_PULLUP);
-*/
+#endif  
+
+#ifdef PIN_KEY_USER1
   pinMode(PIN_KEY_USER1, INPUT_PULLUP);
+#endif  
+#ifdef PIN_KEY_USER2
   pinMode(PIN_KEY_USER2, INPUT_PULLUP);
+#endif  
+#ifdef PIN_KEY_USER3
   pinMode(PIN_KEY_USER3, INPUT_PULLUP);
+#endif  
+#ifdef PIN_KEY_USER4
   pinMode(PIN_KEY_USER4, INPUT_PULLUP);
-  pinMode(PIN_KEY_ESCAPE, INPUT_PULLUP);
+#endif  
+#ifdef PIN_JOY2_BTN
   pinMode(PIN_JOY2_BTN, INPUT_PULLUP);
+#endif  
   analogReadResolution(12);
   xRef=0; yRef=0;
   for (int i=0; i<10; i++) {
@@ -875,7 +938,8 @@ bool virtualkeyboardIsActive(void) {
     return (vkbActive);
 }
 
-void toggleVirtualkeyboard(bool keepOn) {     
+void toggleVirtualkeyboard(bool keepOn) {
+       
     if (keepOn) {      
         tft.drawSpriteNoDma(0,0,(uint16_t*)logo);
         //prev_zt = 0;
@@ -887,20 +951,13 @@ void toggleVirtualkeyboard(bool keepOn) {
         vkbKeepOn = false;
         if ( (vkbActive) /*|| (exitVkbd)*/ ) {
             tft.fillScreenNoDma( RGBVAL16(0x00,0x00,0x00) );
-#ifdef DMA_FULL
-            tft.begin();
-            tft.refresh();
-#endif                        
+            tft.startDMA();                     
             //prev_zt = 0; 
             vkbActive = false;
             exitVkbd = false;
         }
-        else {
-#ifdef DMA_FULL          
-            tft.stop();
-            tft.begin();      
-            tft.start();
-#endif                       
+        else {         
+            tft.stopDMA();                  
             tft.drawSpriteNoDma(0,0,(uint16_t*)logo);           
             //prev_zt = 0;
             vkbActive = true;
@@ -918,7 +975,7 @@ void handleVirtualkeyboard() {
     } else {
       keyPressCount--;
     }
-
+    
     if ( (!virtualkeyboardIsActive()) && (tft.isTouching()) && (!keyPressCount) ) {
         toggleVirtualkeyboard(false);
         return;
@@ -927,8 +984,10 @@ void handleVirtualkeyboard() {
     if ( ( (vkbKeepOn) || (virtualkeyboardIsActive())  )  ) {
         char c = captureTouchZone(keysw, keys, &rx,&ry,&rw,&rh);
         if (c) {
+
             tft.drawRectNoDma( rx,ry,rw,rh, KEYBOARD_HIT_COLOR );
             if ( (c >=1) && (c <= ACTION_MAXKBDVAL) ) {
+            
               keypadval = c;
               keyPressCount = 10;
               delay(50);
@@ -958,14 +1017,11 @@ void handleVirtualkeyboard() {
 }
 
 int emu_setKeymap(int index) {
-  if (index) {
-    //logo = logozx81kbd;
-    //keysw = keyswzx81;      
+  if (index) {   
   }
   else {
-    //logo = logozx80kbd;
-    //keysw = keyswzx80;  
   }
 }
+
 
 
