@@ -1,9 +1,12 @@
 #ifndef EMUAPI_H
 #define EMUAPI_H
 
-//#define INVX        1
+#define INVX        1
 //#define INVY        1
-//#define HAS_SND     1
+#if defined(__IMXRT1052__) || defined(__IMXRT1062__)    
+#else
+#define HAS_SND     1
+#endif
 #define HAS_I2CKBD  1
 //#define TIMER_REND  1
 
@@ -13,6 +16,7 @@
 
 #define emu_Init(ROM) {z81_Start(ROM); z81_Init(); }
 #define emu_Step(x) {z81_Step();}
+#define emu_Input(x) {}
 
 #define PALETTE_SIZE         2
 #define VID_FRAME_SKIP       0x3
@@ -77,17 +81,20 @@ const unsigned short i2ckeys[] = {
    
 #endif
 
-
-#define MASK_JOY2_RIGHT 0x001
-#define MASK_JOY2_LEFT  0x002
-#define MASK_JOY2_UP    0x004
-#define MASK_JOY2_DOWN  0x008
-#define MASK_JOY2_BTN   0x010
-#define MASK_KEY_USER1  0x020
-#define MASK_KEY_USER2  0x040
-#define MASK_KEY_USER3  0x080
-#define MASK_KEY_USER4  0x100
-#define MASK_KEY_ESCAPE 0x200
+#define MASK_JOY2_RIGHT 0x0001
+#define MASK_JOY2_LEFT  0x0002
+#define MASK_JOY2_UP    0x0004
+#define MASK_JOY2_DOWN  0x0008
+#define MASK_JOY2_BTN   0x0010
+#define MASK_KEY_USER1  0x0020
+#define MASK_KEY_USER2  0x0040
+#define MASK_KEY_USER3  0x0080
+#define MASK_JOY1_RIGHT 0x0100
+#define MASK_JOY1_LEFT  0x0200
+#define MASK_JOY1_UP    0x0400
+#define MASK_JOY1_DOWN  0x0800
+#define MASK_JOY1_BTN   0x1000
+#define MASK_KEY_USER4  0x2000
 
 
 
@@ -109,6 +116,8 @@ extern void emu_SetPaletteEntry(unsigned char r, unsigned char g, unsigned char 
 extern void emu_DrawScreen(unsigned char * VBuf, int width, int height, int stride);
 extern void emu_DrawLine(unsigned char * VBuf, int width, int height, int line);
 extern void emu_DrawVsync(void);
+extern int emu_FrameSkip(void);
+extern void * emu_LineBuffer(int line);
 
 extern void emu_InitJoysticks(void);
 extern int emu_SwapJoysticks(int statusOnly);
@@ -125,6 +134,7 @@ extern void emu_resetus(void);
 extern int emu_us(void);
 
 extern int emu_setKeymap(int index);
+
 
 #endif
 

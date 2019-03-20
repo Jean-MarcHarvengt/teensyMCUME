@@ -1,7 +1,7 @@
-
-
 #ifndef audioplaysystem_h_
 #define audioplaysystem_h_
+
+#ifdef HAS_SND
 
 #include <AudioStream.h>
 
@@ -23,6 +23,7 @@ private:
 	virtual void update(void);	
 };
 
+#endif
 
 #endif
 

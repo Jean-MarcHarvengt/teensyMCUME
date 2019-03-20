@@ -1,22 +1,27 @@
 #ifndef EMUAPI_H
 #define EMUAPI_H
 
-//#define HAS_SND 1
+#define INVX        1
+//#define INVY        1
+#if defined(__IMXRT1052__) || defined(__IMXRT1062__)    
+#else
+#define HAS_SND     1
+#endif
+#define HAS_I2CKBD  1
+//#define TIMER_REND  1
 
 // Title:     <                                        >
 #define TITLE "             Coleco Emulator            "
 #define ROMSDIR "coleco"
 
-extern void coc_Init(void);
-extern int coc_Start(char * filename);
-extern void coc_Step(void);
 #define emu_Init(ROM) {coc_Init();coc_Start(ROM);}
 #define emu_Step() {coc_Step();}
+#define emu_Input(x) {}
 
-#define VID_FRAME_SKIP       0x0
 #define PALETTE_SIZE         16
-#define SINGLELINE_RENDERING 1
+#define VID_FRAME_SKIP       0x0
 #define TFT_VBUFFER_YCROP    0
+#define SINGLELINE_RENDERING 1
 
 #define ACTION_NONE          0
 #define ACTION_MAXKBDVAL     12
@@ -54,7 +59,7 @@ const unsigned short keys[] = {
   5,6,7, 
   8,9,10, 
   11,1,12};  
-   
+
 #ifdef HAS_I2CKBD
 const unsigned short i2ckeys[] = {
   0X0080,0X0008,0X0180,
@@ -66,52 +71,60 @@ const unsigned short i2ckeys[] = {
 #endif
 
 
-#define PIN_JOY1_BTN     30
-#define PIN_JOY1_1       16
-#define PIN_JOY1_2       17
-#define PIN_JOY1_3       18
-#define PIN_JOY1_4       19
-
-// Analog joystick for JOY2 and 5 extra buttons
-#define PIN_JOY2_A1X    A12
-#define PIN_JOY2_A2Y    A13
-#define PIN_JOY2_BTN    36
-#define PIN_KEY_USER1   35
-#define PIN_KEY_USER2   34
-#define PIN_KEY_USER3   33
-#define PIN_KEY_USER4   39
-#define PIN_KEY_ESCAPE  23
-
-#define MASK_JOY2_RIGHT 0x001
-#define MASK_JOY2_LEFT  0x002
-#define MASK_JOY2_UP    0x004
-#define MASK_JOY2_DOWN  0x008
-#define MASK_JOY2_BTN   0x010
-#define MASK_KEY_USER1  0x020
-#define MASK_KEY_USER2  0x040
-#define MASK_KEY_USER3  0x080
-#define MASK_KEY_USER4  0x100
-#define MASK_KEY_ESCAPE 0x200
+#define MASK_JOY2_RIGHT 0x0001
+#define MASK_JOY2_LEFT  0x0002
+#define MASK_JOY2_UP    0x0004
+#define MASK_JOY2_DOWN  0x0008
+#define MASK_JOY2_BTN   0x0010
+#define MASK_KEY_USER1  0x0020
+#define MASK_KEY_USER2  0x0040
+#define MASK_KEY_USER3  0x0080
+#define MASK_JOY1_RIGHT 0x0100
+#define MASK_JOY1_LEFT  0x0200
+#define MASK_JOY1_UP    0x0400
+#define MASK_JOY1_DOWN  0x0800
+#define MASK_JOY1_BTN   0x1000
+#define MASK_KEY_USER4  0x2000
 
 
 
 extern void emu_init(void);
 extern void emu_printf(char * text);
+extern void emu_printi(int val);
 extern void * emu_Malloc(int size);
+extern void emu_Free(void * pt);
+
+extern int emu_FileOpen(char * filename);
+extern int emu_FileRead(char * buf, int size);
+extern unsigned char emu_FileGetc(void);
+extern int emu_FileSeek(int seek);
+extern void emu_FileClose(void);
+extern int emu_FileSize(char * filename);
 extern int emu_LoadFile(char * filename, char * buf, int size);
+extern int emu_LoadFileSeek(char * filename, char * buf, int size, int seek);
 extern void emu_SetPaletteEntry(unsigned char r, unsigned char g, unsigned char b, int index);
 extern void emu_DrawScreen(unsigned char * VBuf, int width, int height, int stride);
 extern void emu_DrawLine(unsigned char * VBuf, int width, int height, int line);
 extern void emu_DrawVsync(void);
+extern int emu_FrameSkip(void);
+extern void * emu_LineBuffer(int line);
 
 extern void emu_InitJoysticks(void);
 extern int emu_SwapJoysticks(int statusOnly);
 extern unsigned short emu_DebounceLocalKeys(void);
 extern int emu_ReadKeys(void);
 extern int emu_GetPad(void);
-
+extern int emu_ReadAnalogJoyX(int min, int max);
+extern int emu_ReadAnalogJoyY(int min, int max);
+extern int emu_ReadI2CKeyboard(void);
 extern void emu_sndPlaySound(int chan, int volume, int freq);
+extern void emu_sndPlayBuzz(int size, int val);
 extern void emu_sndInit();
+extern void emu_resetus(void);
+extern int emu_us(void);
+
+extern int emu_setKeymap(int index);
+
 
 #endif
 

@@ -221,6 +221,7 @@ void coc_Step(void)
 {
   //emu_printf("s");
   RunZ80(&ccpu);
+  RunZ80(&ccpu);  
 }
 
 void coc_Stop(void)
@@ -229,106 +230,6 @@ void coc_Stop(void)
 
 
 #ifdef HAS_SND
-
-/***************************************
-* Local procedures
-***************************************/
-/*
-static short square[]={
-32767,32767,32767,32767,
-32767,32767,32767,32767,
-32767,32767,32767,32767,
-32767,32767,32767,32767,
-32767,32767,32767,32767,
-32767,32767,32767,32767,
-32767,32767,32767,32767,
-32767,32767,32767,32767,
--32767,-32767,-32767,-32767,
--32767,-32767,-32767,-32767,
--32767,-32767,-32767,-32767,
--32767,-32767,-32767,-32767,
--32767,-32767,-32767,-32767,
--32767,-32767,-32767,-32767,
--32767,-32767,-32767,-32767,
--32767,-32767,-32767,-32767,
-};
-
-#define NOISEBSIZE 0x8000
-static short noise[NOISEBSIZE];
-
-typedef struct
-{
-  unsigned int spos;
-  unsigned int sinc;
-  unsigned int vol;
-} Channel;
-
-static int NoiseGen=1;
-static Channel chan[4] = {
-	{0,0,0},
-	{0,0,0},
-	{0,0,0} };
-
-#ifdef GP32
-static void snd_Mixer(unsigned short *  stream, int len )
-#else
-static void snd_Mixer(short *  stream, int len )
-#endif
-{
-  int i;
-  short v0,v1,v2,v3;
-  long s; 
-
-  v0=chan[0].vol;
-  v1=chan[1].vol;
-  v2=chan[2].vol;
-  v3=chan[3].vol;
-  for (i=0;i<len>>2;i++)
-  {
-		s =((v0*square[(chan[0].spos>>8)&0x3f])>>10);
-		s+=((v1*square[(chan[1].spos>>8)&0x3f])>>10);
-		s+=((v2*square[(chan[2].spos>>8)&0x3f])>>10);
-		s+=((v3*noise[(chan[3].spos>>8)&(NOISEBSIZE-1)])>>10);      
-#ifdef GP32
-  		*stream++ = (unsigned short)(s+32768);
-  		*stream++ = (unsigned short)(s+32768);
-#else
-  		*stream++ = (short)(s);
-  		*stream++ = (short)(s);
-#endif
-		chan[0].spos += chan[0].sinc;
-		chan[1].spos += chan[1].sinc;
-		chan[2].spos += chan[2].sinc;
-		chan[3].spos += chan[3].sinc;	
-  }
-}
-
-static void snd_Reset(void)
-{
-  int i;
-
-  chan[0].vol = 0;
-  chan[1].vol = 0;
-  chan[2].vol = 0;
-  chan[3].vol = 0;
-  chan[0].sinc = 0;
-  chan[1].sinc = 0;
-  chan[2].sinc = 0;
-  chan[3].sinc = 0;
-  for(i=0;i<NOISEBSIZE;i++)
-  {
-      NoiseGen<<=1;
-      if(NoiseGen&0x80000000) NoiseGen^=0x08000001;
-      noise[i]=(NoiseGen&1? 32767:-32767);
-  }
-}
-
-static void snd_Sound(int C, int F, int V)
-{
-  chan[C].vol = V;
-  chan[C].sinc = F>>1;
-}
-*/
 
 static void snd_Reset(void)
 {
@@ -357,37 +258,45 @@ void Joysticks(void)
 {
   int k;
   int j;
+  int ij;
   int N=0;
   word JS[2] = { 0xFFFF,0xFFFF };
 
   k=emu_ReadKeys();
   j=emu_GetPad();
-  
+  ij=emu_ReadI2CKeyboard();
+
   if (j & 0x8000) N = 1;
   else N = 0;
 
   if(j)
      JS[N]=(JS[N]&0xFFF0)|(j-1);
+  if(ij)
+     JS[N]=(JS[N]&0xFFF0)|(ij-1);
 
-  if (k & 0x10)
+  if (k & MASK_JOY2_BTN)
   {
           JS[N]&=0xBFFF; //Fire 1
   }
-  if (k & 0x20)
+  if (k & MASK_KEY_USER1)
   {
           JS[N]&=0xFFBF; //Fire 2
+  }
+  if (k & MASK_KEY_USER2)
+  {
+          JS[0]=(JS[0]&0xFFF0)|(2); //1
   }
   //   JS[0]=(JS[0]&0xFFF0)|(12);
   //   JS[0]=(JS[0]&0xFFF0)|(13);
 
-  if (k & 0x08)
+  if (k & MASK_JOY2_DOWN)
           JS[N]&=0xFBFF; //Down
-  if (k & 0x04)
+  if (k & MASK_JOY2_UP)
           JS[N]&=0xFEFF; //Up
-  if (k & 0x01)
-          JS[N]&=0xF7FF; //Left
-  if (k & 0x02)
-          JS[N]&=0xFDFF; //Right
+  if (k & MASK_JOY2_RIGHT)
+          JS[N]&=0xF7FF; //Right
+  if (k & MASK_JOY2_LEFT)
+          JS[N]&=0xFDFF; //Left
 
   JoyState[0]=JS[0];JoyState[1]=JS[1];
 }
@@ -716,10 +625,10 @@ void Play(int C,int F,int V)
 void RefreshScreen(void) 
 { 
 #if SINGLELINE_RENDERING
-  emu_DrawVsync();
 #else
   emu_DrawScreen(XBuf, WIDTH, HEIGHT, WIDTH);
 #endif
+  emu_DrawVsync();  
 }
 
 /** RefreshBorder() ******************************************/
