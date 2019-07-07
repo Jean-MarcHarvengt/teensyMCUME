@@ -545,7 +545,7 @@ void emu_init(void)
     i2cKeyboardPresent = true;
     Serial.println("i2C keyboard found");            
   }
-#endif 
+#endif
 }
 
 
@@ -608,11 +608,27 @@ int emu_FileOpen(char * filename)
 
 int emu_FileRead(char * buf, int size)
 {
-  int retval = file.read(buf, size);
-  if (retval != size) {
-    emu_printf("FileRead failed");
+  unsigned char buffer[256];
+  
+  int remaining = size;
+  int byteread = 0; 
+  while (remaining >= 256) {
+    int retval = file.read(buffer, 256);
+    if (retval>0) {
+      memcpy(buf,buffer,retval);
+      buf += retval;
+      byteread += retval;     
+      remaining -= retval;
+    }
   }
-  return (retval);     
+  if (remaining) {
+    int retval = file.read(buffer, remaining);
+    if (retval>0) {
+      memcpy(buf,buffer,retval);
+      byteread += retval;
+    }
+  }    
+  return byteread; 
 }
 
 unsigned char emu_FileGetc(void) {
@@ -672,9 +688,11 @@ int emu_LoadFile(char * filename, char * buf, int size)
   {
     filesize = file.size(); 
     emu_printf(filesize);
+    
     if (size >= filesize)
     {
-      if (file.read(buf, filesize) != filesize) {
+      if (emu_FileRead(buf, filesize) != filesize) 
+      {
         emu_printf("File read failed");
       }        
     }

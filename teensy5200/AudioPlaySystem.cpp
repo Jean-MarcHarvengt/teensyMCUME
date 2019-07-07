@@ -1,11 +1,11 @@
+extern "C" {
+#include "emuapi.h"
+}
+
 #ifdef HAS_SND
 
 #include "AudioPlaySystem.h"
 #include <AudioStream.h>
-
-extern "C" {
-#include "emuapi.h"
-}
 
 #define SAMPLERATE AUDIO_SAMPLE_RATE_EXACT
 #define CLOCKFREQ 985248
@@ -159,9 +159,9 @@ void AudioPlaySystem::reset(void)
 
 void AudioPlaySystem::stop(void)
 {
-	__disable_irq();
+	//__disable_irq();
 	playing = false;	
-	__enable_irq();
+	//__enable_irq();
 }
 
 bool AudioPlaySystem::isPlaying(void) 

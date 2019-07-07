@@ -16,10 +16,11 @@
 #define TFT_RST         255  // 255 = unused, connected to 3.3V
 
 // SD
-#define SD_SCLK        13
-#define SD_MOSI        12
-#define SD_MISO        11  
-#define SD_CS          23
+//#define SD_SCLK        13
+//#define SD_MOSI        12
+//#define SD_MISO        11  
+//#define SD_CS          23
+#define SD_CS            BUILTIN_SDCARD
 
 // I2C keyboard
 #define I2C_SCL_IO     19

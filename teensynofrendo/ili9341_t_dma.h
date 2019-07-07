@@ -13,8 +13,10 @@
 
 
 #define FLIP_SCREEN   1
-//#define ILI9341_DEBUG 1
-//#define ILI9341_STATICFB 1
+#if defined(__IMXRT1052__) || defined(__IMXRT1062__)    
+#define ILI9341_STATICFB 1
+#endif
+#define ILI9341_STATICFB 1
 
 
 #define RGBVAL32(r,g,b)  ( (r<<16) | (g<<8) | b )

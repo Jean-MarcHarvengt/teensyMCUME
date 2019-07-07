@@ -223,7 +223,8 @@ void loop(void)
     handleVirtualkeyboard();
 #endif    
     if ( (!virtualkeyboardIsActive()) || (vgaMode) ) {  
-      emu_Step();    
+      emu_Step();
+      delay(20);    
       uint16_t bClick = emu_DebounceLocalKeys();
       emu_Input(bClick);      
     }

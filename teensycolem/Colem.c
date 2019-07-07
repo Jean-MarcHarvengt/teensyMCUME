@@ -70,8 +70,10 @@ byte Adam        = 0;          /* 1: Emulate Coleco Adam        */
 	
 
 /* Main and Video RAMs           */
-static byte * VRAM=0; //[VRAMSIZE];
-static byte * RAM=0; //RAM[RAMSIZE];
+//static byte * VRAM=0; //[VRAMSIZE];
+//static byte * RAM=0; //RAM[RAMSIZE];
+static byte VRAM[VRAMSIZE];
+static byte RAM[RAMSIZE];
 
 Z80 ccpu;                       /* Z80 CPU registers and state   */
 SN76489 PSG;                   /* SN76489 PSG state             */
@@ -116,8 +118,8 @@ void coc_Init(void)
   for(J=0;J<16;J++)
     SetColor(J,Palette[J].R,Palette[J].G,Palette[J].B);
 
-  if (VRAM == 0) VRAM = (byte *)emu_Malloc(VRAMSIZE);
-  if (RAM == 0) RAM = (byte *)emu_Malloc(RAMSIZE);
+  //if (VRAM == 0) VRAM = (byte *)emu_Malloc(VRAMSIZE);
+  //if (RAM == 0) RAM = (byte *)emu_Malloc(RAMSIZE);
 #if SINGLELINE_RENDERING
   if (XBuf == 0) XBuf = (byte *)emu_Malloc(WIDTH);
 #else

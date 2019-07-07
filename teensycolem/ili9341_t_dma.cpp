@@ -81,6 +81,9 @@ static void dmaInterrupt() {
         rstop = 1;
     }
   }
+#if defined(__IMXRT1052__) || defined(__IMXRT1062__)    
+  arm_dcache_flush(blocks[curTransfer], LINES_PER_BLOCK*ILI9341_TFTWIDTH*2);
+#endif    
 }
 
 static void setDmaStruct() {

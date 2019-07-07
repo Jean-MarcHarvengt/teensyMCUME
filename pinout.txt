@@ -1,37 +1,38 @@
 pinout Teensy 3.6 (2x24 pins)
 -----------------------------
 
-                         GND X           VIn  (NC)
-                          00             Ang  (NC)
-                          01           X 3.3v (NC)
-           VGA Blue (OPT) 02           X 23   SD CS
-          Key USER1       03 X           22   VGA Hsync (OPT)
-          Key USER2       04 X           21   VGA Red (OPT)
-            VGA Red (OPT) 05             20   VGA Red (OPT)
-          VGA Green (OPT) 06           X 19   I2C CLK (OPT)
-          VGA Green (OPT) 07           X 18   I2C DAT (OPT)
-          VGA Green (OPT) 08           X 17   JOY2 Fire
-             ILI DC       09 X         X 16   JOY2 AnalogY-A2
-             ILI CS       10 X         X 15   JOY2 AnalogX-A1
-SD/ILI SDI+T_DIN-SPI MOSI 11 X           14   VGA Blue (OPT)
-SD/ILI SDO+T_DO-SPI MISO  12 X         X 13   SD/ILI SCK+T_CLK-SPI SCK
+                                  GND X           VIn  (NC)
+                                   00             Ang  (NC)
+                                   01           X 3.3v (NC)
+           VGA Blue (OPT)          02           X 23   ILI SD CS (OPT)
+          Key USER1 (OPT2)         03 X           22   VGA Hsync (OPT)
+          Key USER2 (OPT2)         04 X           21   VGA Red (OPT)
+            VGA Red (OPT)          05             20   VGA Red (OPT)
+          VGA Green (OPT)          06           X 19   I2C CLK (OPT)
+          VGA Green (OPT)          07           X 18   I2C DAT (OPT)
+          VGA Green (OPT)          08           X 17   JOY2 Fire
+             ILI DC                09 X         X 16   JOY2 AnalogY-A2
+             ILI CS                10 X         X 15   JOY2 AnalogX-A1
+ILI SDI/SD(OPT)/T_DIN(OPT) - MOSI  11 X           14   VGA Blue (OPT)
+ILI SDO/SD(OPT)/T_DO(OPT) - MISO   12 X         X 13   ILI SCK/SD(OPT)/T_CLK(OPT) - SCK
 
 
 
-               (NC)       3.3v           GND
-               (NC)       24             DAC1 Audio R (OPT)
-               (NC)       25             DAC0 Audio L (OPT)
-               (NC)       26             39   Key USER4 (OPT)
-               (NC)       27             38   ILI T_CS (Touch screen) (OPT)
-               (NC)       28             37   ILI T_IRQ (Touch screen) (OPT)
-          VGA Vsync (OPT) 29             36    
-                          30             35    
-                          31             34   
-                          32             33   Key USER3 (OPT)
+               (NC)                3.3v           GND
+               (NC)                24             DAC1 Audio R (OPT)
+               (NC)                25             DAC0 Audio L (OPT)
+               (NC)                26             39   Key USER4 (OPT)
+               (NC)                27             38   ILI T_CS (Touch screen) (OPT)
+               (NC)                28             37   ILI T_IRQ (Touch screen) (OPT)
+          VGA Vsync (OPT)          29             36    
+                                   30             35    
+                                   31             34   
+                                   32             33   Key USER3 (OPT)
 
 
-(X)   mandatory pins to connect for the minimum set-up
-(OPT) extra connections for VGA out, Touch, extra keys, audio
+(X)    mandatory pins to connect for the minimum set-up
+(OPT)  extra connections for VGA out, Touch, extra keys, audio, ILI SD (best to use Teensy buildin SDIO)
+(OPT2) keys required to play only 
 
 The keys (all) are using internal pull-up so just connect the other side to the GND
 The Analog joypad also needs VCC and GND connections !

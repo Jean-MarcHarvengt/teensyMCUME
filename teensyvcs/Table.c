@@ -53,12 +53,12 @@
  * There are #defines for addressing modes i.e. IMPLIED, INDIRECT_X,
  * ZERO_PAGE in "cpu.h"... These can be used to make a diassembler.
  */
+#include <Arduino.h>
 
-
-int clength[] =
+PROGMEM int clength[] =
 {1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 0};
 
-struct lookup_tag lookup[] =
+PROGMEM struct lookup_tag lookup[] =
 {
 
 /****  Positive  ****/

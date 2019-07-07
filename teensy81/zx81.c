@@ -10,7 +10,8 @@
 #define MEMORYRAM_SIZE 0x10000
 
 static AY8910 ay;
-byte * mem = 0; //mem[ 0x10000 ];
+//byte memo[ MEMORYRAM_SIZE ];
+byte * mem = 0;
 unsigned char *memptr[64];
 int memattr[64];
 int unexpanded=0;
